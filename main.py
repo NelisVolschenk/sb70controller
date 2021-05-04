@@ -98,7 +98,7 @@ class SystemController(object):
 
         while True:
             soc = self.dbusservices['Soc']['Value']
-            outpower = self.dbusservices['L1OutPower']['Value']
+            outpower = self.dbusservices['L1OutPower']['Value'] - self.dbusservices['L1SolarPower']['Value']
 
             # Set the stable battery SOC depending on the weekday
             # The weekend ends in the same week as it starts (eg. sunday)

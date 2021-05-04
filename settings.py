@@ -32,7 +32,7 @@ settingsdict = {
     'ChargeDuration': datetime.timedelta(hours=8),
     'ChargeDate': datetime.date.today(),
     'ChargeEndTime': datetime.datetime.now(),
-    'ChargeInterval': datetime.timedelta(weeks=2),
+    'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
     'ChargePower': 30000
 }
