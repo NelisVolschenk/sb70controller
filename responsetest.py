@@ -20,15 +20,8 @@ DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
 proxy = VeDbusItemImport(
     bus=SysBus,
-    serviceName="com.victronenergy.system",
-    path="/Ac/Consumption/L1/Power",
-    eventCallback=print_value,
-    createsignal=True)
-
-proxy2 = VeDbusItemImport(
-    bus=SysBus,
-    serviceName="com.victronenergy.system",
-    path="/Dc/Battery/Soc",
+    serviceName="com.victronenergy.vebus",
+    path="/Ac/Out/L1/Power",
     eventCallback=print_value,
     createsignal=True)
 
