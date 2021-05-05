@@ -3,11 +3,15 @@
 from traceback import print_exc
 from os import _exit as os_exit
 from os import statvfs
+from subprocess import check_output, CalledProcessError
 import logging
 import dbus
 logger = logging.getLogger(__name__)
 
 VEDBUS_INVALID = dbus.Array([], signature=dbus.Signature('i'), variant_level=1)
+
+class NoVrmPortalIdError(Exception):
+	pass
 
 # Use this function to make sure the code quits on an unexpected exception. Make sure to use it
 # when using gobject.idle_add and also gobject.timeout_add.
@@ -19,7 +23,7 @@ def exit_on_error(func, *args, **kwargs):
 		return func(*args, **kwargs)
 	except:
 		try:
-			print 'exit_on_error: there was an exception. Printing stacktrace will be tryed and then exit'
+			print 'exit_on_error: there was an exception. Printing stacktrace will be tried and then exit'
 			print_exc()
 		except:
 			pass
@@ -31,24 +35,40 @@ def exit_on_error(func, *args, **kwargs):
 
 __vrm_portal_id = None
 def get_vrm_portal_id():
-	# For the CCGX, the definition of the VRM Portal ID is that it is the mac address of the onboard-
-	# ethernet port (eth0), stripped from its colons (:) and lower case.
-
-	# nice coincidence is that this also works fine when running on your (linux) development computer.
+	# The original definition of the VRM Portal ID is that it is the mac
+	# address of the onboard- ethernet port (eth0), stripped from its colons
+	# (:) and lower case. This may however differ between platforms. On Venus
+	# the task is therefore deferred to /sbin/get-unique-id so that a
+	# platform specific method can be easily defined.
+	#
+	# If /sbin/get-unique-id does not exist, then use the ethernet address
+	# of eth0. This also handles the case where velib_python is used as a
+	# package install on a Raspberry Pi.
+	#
+	# On a Linux host where the network interface may not be eth0, you can set
+	# the VRM_IFACE environment variable to the correct name.
 
 	global __vrm_portal_id
 
 	if __vrm_portal_id:
 		return __vrm_portal_id
 
-	# Attempt to get the id from /data/venus/unique-id where venus puts it
-	# on startup.
+	portal_id = None
+
+	# First try the method that works if we don't have a data partition. This
+	# will fail when the current user is not root.
 	try:
-		__vrm_portal_id = open('/data/venus/unique-id').read().strip()
-	except IOError:
+		portal_id = check_output("/sbin/get-unique-id").strip()
+		if not portal_id:
+			raise NoVrmPortalIdError("get-unique-id returned blank")
+		__vrm_portal_id = portal_id
+		return portal_id
+	except CalledProcessError:
+		# get-unique-id returned non-zero
+		raise NoVrmPortalIdError("get-unique-id returned non-zero")
+	except OSError:
+		# File doesn't exist, use fallback
 		pass
-	else:
-		return __vrm_portal_id
 
 	# Fall back to getting our id using a syscall. Assume we are on linux.
 	# Allow the user to override what interface is used using an environment
@@ -57,7 +77,11 @@ def get_vrm_portal_id():
 
 	iface = os.environ.get('VRM_IFACE', 'eth0')
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', iface[:15]))
+	try:
+		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', iface[:15]))
+	except IOError:
+		raise NoVrmPortalIdError("ioctl failed for eth0")
+
 	__vrm_portal_id = ''.join(['%02x' % ord(char) for char in info[18:24]])
 	return __vrm_portal_id
 
@@ -113,15 +137,57 @@ def get_load_averages():
 	return c.split(' ')[:3]
 
 
-# Returns False if it cannot find a machine name. Otherwise returns the string
+def _get_sysfs_machine_name():
+	try:
+		with open('/sys/firmware/devicetree/base/model', 'r') as f:
+			return f.read().rstrip('\x00')
+	except IOError:
+		pass
+
+	return None
+
+# Returns None if it cannot find a machine name. Otherwise returns the string
 # containing the name
 def get_machine_name():
-	c = read_file('/proc/device-tree/model')
+	# First try calling the venus utility script
+	try:
+		return check_output("/usr/bin/product-name").strip()
+	except (CalledProcessError, OSError):
+		pass
 
-	if c != False:
-		return c.strip('\x00')
+	# Fall back to sysfs
+	name = _get_sysfs_machine_name()
+	if name is not None:
+		return name
 
-	return read_file('/etc/venus/machine')
+	# Fall back to venus build machine name
+	try:
+		with open('/etc/venus/machine', 'r') as f:
+			return f.read().strip()
+	except IOError:
+		pass
+
+	return None
+
+
+def get_product_id():
+	""" Find the machine ID and return it. """
+
+	# First try calling the venus utility script
+	try:
+		return check_output("/usr/bin/product-id").strip()
+	except (CalledProcessError, OSError):
+		pass
+
+	# Fall back machine name mechanism
+	name = _get_sysfs_machine_name()
+	return {
+		'Color Control GX': 'C001',
+		'Venus GX': 'C002',
+		'Octo GX': 'C006',
+		'EasySolar-II': 'C007',
+		'MultiPlus-II': 'C008'
+	}.get(name, 'C003') # C003 is Generic
 
 
 # Returns False if it cannot open the file. Otherwise returns its rstripped contents
