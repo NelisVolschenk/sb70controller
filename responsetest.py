@@ -3,8 +3,10 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import glib
 from ext.velib_python.vedbus import VeDbusItemImport
+from ext.velib_python.ve_utils import unwrap_dbus_value
 
 def print_value(name, path, changes):
+    value = changes['Value']
     print "Value changed to %s" % changes
 
 DBusGMainLoop(set_as_default=True)
