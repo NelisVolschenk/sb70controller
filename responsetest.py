@@ -14,7 +14,7 @@ def print_value(name, path, changes):
     global oldtime
     delta = newtime - oldtime
     oldtime = newtime
-    print delta, " - Value changed to ", value
+    print delta, " - Value changed to ", changes
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
@@ -28,7 +28,7 @@ proxy = VeDbusItemImport(
 proxy2 = VeDbusItemImport(
     bus=SysBus,
     serviceName="com.victronenergy.system",
-    path="/Ac/PvOnOutput/L1/Power",
+    path="/Dc/Battery/Soc",
     eventCallback=print_value,
     createsignal=True)
 
