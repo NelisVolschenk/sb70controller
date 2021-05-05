@@ -6,9 +6,15 @@ from datetime import datetime
 from ext.velib_python.vedbus import VeDbusItemImport
 from ext.velib_python.ve_utils import unwrap_dbus_value
 
+oldtime = datetime.now()
+newtime = datetime.now()
+
 def print_value(name, path, changes):
     value = changes['Value']
-    print datetime.now(), " - Value changed to ", value
+    newtime = datetime.now()
+    delta = newtime - oldtime
+    oldtime = newtime
+    print delta, " - Value changed to ", value
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
