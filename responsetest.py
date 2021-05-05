@@ -4,7 +4,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 import glib
 from ext.velib_python.vedbus import VeDbusItemImport
 
-def print_value():
+def print_value(name, path, changes):
     print "Value changed"
 
 DBusGMainLoop(set_as_default=True)
