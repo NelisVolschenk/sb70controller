@@ -18,3 +18,4 @@ proxy = VeDbusItemImport(
 
 mainloop = glib.MainLoop()
 mainloop.run()
+print "mainloop doesn't block"
