@@ -16,5 +16,5 @@ proxy = VeDbusItemImport(
     eventCallback=print_value,
     createsignal=True)
 
-mainloop = glib.Mainloop()
+mainloop = glib.MainLoop()
 mainloop.run()
