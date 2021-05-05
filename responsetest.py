@@ -14,7 +14,7 @@ proxy = VeDbusItemImport(
     serviceName="com.victronenergy.system",
     path="/Ac/Consumption/L1/Power",
     eventCallback=print_value,
-    createsignal=False)
+    createsignal=True)
 
 mainloop = glib.MainLoop()
 mainloop.run()
