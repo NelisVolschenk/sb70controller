@@ -7,7 +7,7 @@ from ext.velib_python.ve_utils import unwrap_dbus_value
 
 def print_value(name, path, changes):
     value = changes['Value']
-    print "Value changed to %s" % changes
+    print "Value changed to %s" % value
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
