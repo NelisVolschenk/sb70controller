@@ -25,6 +25,13 @@ proxy = VeDbusItemImport(
     eventCallback=print_value,
     createsignal=True)
 
+proxy2 = VeDbusItemImport(
+    bus=SysBus,
+    serviceName="com.victronenergy.system",
+    path="/Ac/PvOnOutput/L1/Power",
+    eventCallback=print_value,
+    createsignal=True)
+
 mainloop = glib.MainLoop()
 mainloop.run()
 print "mainloop doesn't block"
