@@ -7,11 +7,11 @@ from ext.velib_python.vedbus import VeDbusItemImport
 from ext.velib_python.ve_utils import unwrap_dbus_value
 
 oldtime = datetime.now()
-newtime = datetime.now()
 
 def print_value(name, path, changes):
     value = changes['Value']
     newtime = datetime.now()
+    global oldtime
     delta = newtime - oldtime
     oldtime = newtime
     print delta, " - Value changed to ", value
