@@ -39,7 +39,7 @@ proxy1 = VeDbusItemImport(
 proxy2 = VeDbusItemImport(
     bus=SysBus,
     serviceName="com.victronenergy.system",
-    path="Ac/Consumption/L1/Power",
+    path="/Ac/Consumption/L1/Power",
     eventCallback=syschecker,
     createsignal=True)
 
