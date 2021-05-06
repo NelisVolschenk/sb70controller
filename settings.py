@@ -76,6 +76,6 @@ servicesdict = {
 donotcalclist = ["/Settings/CGwacs/AcPowerSetPoint"]
 
 for invname in settingsdict['PvInverterDbusNames']:
-    for name, description in servicesdict:
+    for name in servicesdict:
         if name.startswith('L1Solar'):
-            description['Service'] += '.' + invname
+            servicesdict[name]['Service'] += '.' + invname
