@@ -25,6 +25,25 @@ class SystemController(object):
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
+        self.setup_dbus_services()
+
+    def setup_dbus_services(self):
+
+        for service in self.dbusservices:
+            try:
+                self.dbusservices[service]['Proxy'] = VeDbusItemImport(
+                    bus=self.bus,
+                    serviceName=self.dbusservices[service]['Service'],
+                    path=self.dbusservices[service]['Path'],
+                    eventCallback=self.update_values,
+                    createsignal=True)
+            except dbus.DBusException:
+                mainlogger.error('Exception in setting up dbus service ', service)
+
+    def update_values(self, name, path, changes):
+        for service in self.dbusservices:
+            self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
+        print datetime.datetime.now()
 
     def getvalues(self):
 
@@ -51,7 +70,6 @@ class SystemController(object):
                 elif service == 'L1SolarPower':
                     self.dbusservices[service]['Value'] = 0
                 mainlogger.warning('No value on %s' % service)
-
 
     def setvalue(self, service, value):
 
