@@ -128,7 +128,7 @@ class SystemController(object):
         weekend = False
         minin = self.settings['MinInPower']
         soc = self.dbusservices['Soc']['Value']
-        outpower = self.dbusservices['L1OutPower']['Value'] - self.dbusservices['L1SolarPower']['Value']
+        outpower = max(self.dbusservices['L1OutPower']['Value'] - self.dbusservices['L1SolarPower']['Value'], 0)
 
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
@@ -164,14 +164,15 @@ class SystemController(object):
         powerslope = (1 - 0.2) / (self.settings['20%PowerSoc'] - stablebatterysoc)
         # Battery is lower than the setpoint, set inpower = recharge power + outpower
         if soc <= stablebatterysoc - 1:
-            inpower = (2 * (stablebatterysoc - soc) / 100) * (self.settings['BatteryCapacity'] /
-                                                              self.settings['LowBatteryRechargeTime']) + outpower
+            inpower = (2 * (stablebatterysoc - soc) / 100) \
+                      * (self.settings['BatteryCapacity'] /self.settings['LowBatteryRechargeTime']) \
+                      + outpower
         # Battery is above the 20% power value, set inpower = 20% of outpower + constant inpower
         elif soc >= self.settings['20%PowerSoc']:
-            inpower = 0.2 * outpower + self.settings['ConstInPower']
+            inpower = 0.2 * outpower
         # Battery is in the powerslope area, use it to calculate the inpower
         else:
-            inpower = outpower * (1 - (soc - stablebatterysoc) * powerslope) + self.settings['ConstInPower']
+            inpower = outpower * (1 - (soc - stablebatterysoc) * powerslope)
 
         # Do a charge if the conditions are met
         self.charge()
