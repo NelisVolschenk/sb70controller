@@ -18,6 +18,7 @@ def print_value(name, path, changes):
 
 def timechecker():
     print datetime.now(), "timechecker working"
+    return True
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
