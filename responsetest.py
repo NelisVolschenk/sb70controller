@@ -28,10 +28,11 @@ def syschecker(name, path, changes):
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
+SysBus.list_names()
 
 proxy1 = VeDbusItemImport(
     bus=SysBus,
-    serviceName="com.victronenergy.vebus",
+    serviceName="com.victronenergy.vebus ",
     path="/Ac/Out/L1/P",
     eventCallback=buschecker,
     createsignal=True)
