@@ -46,34 +46,34 @@ class SystemController(object):
             self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
         # Do not do calculations on set
         if path not in self.donotcalclist:
-            print path
             self.do_calcs()
 
-    def get_values(self):
-
-        # Get new values for the services
-        for service in self.dbusservices:
-            try:
-                self.dbusservices[service]['Value'] = VeDbusItemImport(
-                        bus=self.bus,
-                        serviceName=self.dbusservices[service]['Service'],
-                        path=self.dbusservices[service]['Path'],
-                        eventCallback=None,
-                        createsignal=False).get_value()
-            except dbus.DBusException:
-                mainlogger.warning('Exception in getting dbus service %s' % service)
-
-            try:
-                self.dbusservices[service]['Value'] *= 1
-                self.dbusservices[service]['Value'] = max(self.dbusservices[service]['Value'], 0)
-            except:
-                if service == 'L1OutPower':  #or service == 'L2OutPower' or service == 'L3OutPower'
-                    self.dbusservices[service]['Value'] = 1000
-                elif service == 'Soc':
-                    self.dbusservices[service]['Value'] = self.settings['StableBatterySoc']
-                elif service == 'L1SolarPower':
-                    self.dbusservices[service]['Value'] = 0
-                mainlogger.warning('No value on %s' % service)
+    # This is no longer used
+    # def get_values(self):
+    #
+    #     # Get new values for the services
+    #     for service in self.dbusservices:
+    #         try:
+    #             self.dbusservices[service]['Value'] = VeDbusItemImport(
+    #                     bus=self.bus,
+    #                     serviceName=self.dbusservices[service]['Service'],
+    #                     path=self.dbusservices[service]['Path'],
+    #                     eventCallback=None,
+    #                     createsignal=False).get_value()
+    #         except dbus.DBusException:
+    #             mainlogger.warning('Exception in getting dbus service %s' % service)
+    #
+    #         try:
+    #             self.dbusservices[service]['Value'] *= 1
+    #             self.dbusservices[service]['Value'] = max(self.dbusservices[service]['Value'], 0)
+    #         except:
+    #             if service == 'L1OutPower':  #or service == 'L2OutPower' or service == 'L3OutPower'
+    #                 self.dbusservices[service]['Value'] = 1000
+    #             elif service == 'Soc':
+    #                 self.dbusservices[service]['Value'] = self.settings['StableBatterySoc']
+    #             elif service == 'L1SolarPower':
+    #                 self.dbusservices[service]['Value'] = 0
+    #             mainlogger.warning('No value on %s' % service)
 
     def set_value(self, service, value):
 
