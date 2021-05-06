@@ -16,6 +16,9 @@ def print_value(name, path, changes):
     oldtime = newtime
     print delta, " - Value changed to ", changes
 
+def timechecker():
+    print datetime.now(), "timechecker working"
+
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
 proxy = VeDbusItemImport(
@@ -26,5 +29,6 @@ proxy = VeDbusItemImport(
     createsignal=True)
 
 mainloop = glib.MainLoop()
+mainloop.timeout_add_seconds(2, timechecker)
 mainloop.run()
 print "mainloop doesn't block"
