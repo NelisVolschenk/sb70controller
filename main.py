@@ -100,6 +100,8 @@ class SystemController(object):
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
 
+        self.getvalues()
+
         # Set the stable battery SOC depending on the weekday
         # The weekend ends in the same week as it starts (eg. sunday)
         if self.settings['WeekendEndDay'] >= self.settings['WeekendStartDay']:
