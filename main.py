@@ -10,7 +10,7 @@ import sys
 import datetime
 import logging
 from logging.handlers import RotatingFileHandler
-from settings import settingsdict, servicesdict
+from settings import settingsdict, servicesdict, donotcalclist
 from ext.velib_python.vedbus import VeDbusItemImport
 
 
@@ -26,7 +26,7 @@ class SystemController(object):
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
         self.setup_dbus_services()
-        self.donotcalclist = ["/Settings/CGwacs/AcPowerSetPoint"]
+        self.donotcalc = donotcalclist
 
     def setup_dbus_services(self):
 
@@ -44,9 +44,16 @@ class SystemController(object):
     def update_values(self, name, path, changes):
 
         for service in self.dbusservices:
-            self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
-        # Do not do calculations on set
-        if path not in self.donotcalclist:
+            try:
+                self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
+            except dbus.DBusException:
+                mainlogger.warning('Exception in getting dbus service ', service)
+            try:
+                self.dbusservices[service]['Value'] *= 1
+            except:
+                mainlogger.warning('Non numeric value on ', service)
+        # Do not do calculations on this list
+        if path not in self.donotcalc:
             self.do_calcs()
 
     # This is no longer used
@@ -200,7 +207,21 @@ class SystemController(object):
                 minin = self.settings['MinInPower']
                 self.settings['Safety']['Active'] = False
 
-        inpower = max(minin, inpower)
+        # Control the fronius inverter to prevent feed in
+        if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower']:
+            self.settings['ThrottleActive'] = True
+            self.settings['ThrottleValue'] = self.settings['ThrottleValue'] \
+                                             + self.settings['MinInPower'] \
+                                             - self.dbusservices['L1InPower']['Value'] \
+                                             + self.settings['ThrottleBuffer']
+            # set the fronius power to the max minus the throttle amoount
+            powerlimit = self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['ThrottleValue']
+            self.set_value('L1SolarPowerLimit', powerlimit)
+        elif self.settings['ThrottleValue'] > 0:
+
+
+
+        inpower = max(minin, inpower) + self.settings['ThrottleValue']
 
         # Send the inputpower to the CCGX control loop
         self.set_value('AcSetpoint', inpower)
