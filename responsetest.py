@@ -28,7 +28,7 @@ def syschecker(name, path, changes):
 
 DBusGMainLoop(set_as_default=True)
 SysBus = dbus.SystemBus()
-SysBus.list_names()
+print SysBus.list_names()
 
 proxy1 = VeDbusItemImport(
     bus=SysBus,
