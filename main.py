@@ -179,6 +179,8 @@ class SystemController(object):
         # Send the inputpower to the CCGX control loop
         self.setvalue('AcSetpoint', inpower)
 
+        mainlogger.debug(self.dbusservices)
+
 
 if __name__ == "__main__":
 
@@ -186,7 +188,7 @@ if __name__ == "__main__":
     def create_rotating_log(path):
         # Create the logger
         logger = logging.getLogger("Main Log")
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         # Create a rotating handler
         handler = RotatingFileHandler(path, maxBytes=1048576, backupCount=5)
         # Create a formatter and add to handler
