@@ -41,11 +41,13 @@ class SystemController(object):
                 mainlogger.error('Exception in setting up dbus service ', service)
 
     def update_values(self, name, path, changes):
+        print name
+        print path
         for service in self.dbusservices:
             self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
-        print datetime.datetime.now()
+        self.do_calcs()
 
-    def getvalues(self):
+    def get_values(self):
 
         # Get new values for the services
         for service in self.dbusservices:
@@ -71,7 +73,7 @@ class SystemController(object):
                     self.dbusservices[service]['Value'] = 0
                 mainlogger.warning('No value on %s' % service)
 
-    def setvalue(self, service, value):
+    def set_value(self, service, value):
 
         try:
             VeDbusItemImport(
@@ -118,8 +120,6 @@ class SystemController(object):
 
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
-
-        self.getvalues()
 
         # Set the stable battery SOC depending on the weekday
         # The weekend ends in the same week as it starts (eg. sunday)
@@ -198,7 +198,7 @@ class SystemController(object):
         inpower = max(minin, inpower)
 
         # Send the inputpower to the CCGX control loop
-        self.setvalue('AcSetpoint', inpower)
+        self.set_value('AcSetpoint', inpower)
 
         mainlogger.debug(self.dbusservices)
 
