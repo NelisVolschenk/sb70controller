@@ -16,6 +16,9 @@ def print_value(name, path, changes):
     oldtime = newtime
     print delta, " - Value changed to ", changes
 
+def print_proxy(name, path, changes):
+    print proxy
+
 def timechecker():
     print datetime.now(), "timechecker working"
     return True
@@ -26,9 +29,9 @@ proxy = VeDbusItemImport(
     bus=SysBus,
     serviceName="com.victronenergy.system",
     path="/Ac/Consumption/L1/Power",
-    eventCallback=print_value,
+    eventCallback=print_proxy,
     createsignal=True)
 
-glib.timeout_add_seconds(2, timechecker)
+#glib.timeout_add_seconds(2, timechecker)
 mainloop = glib.MainLoop()
 mainloop.run()

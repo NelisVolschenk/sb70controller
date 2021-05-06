@@ -52,6 +52,7 @@ class SystemController(object):
                     self.dbusservices[service]['Value'] = 0
                 mainlogger.warning('No value on %s' % service)
 
+
     def setvalue(self, service, value):
 
         try:
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     def create_rotating_log(path):
         # Create the logger
         logger = logging.getLogger("Main Log")
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
         # Create a rotating handler
         handler = RotatingFileHandler(path, maxBytes=1048576, backupCount=5)
         # Create a formatter and add to handler
