@@ -17,7 +17,7 @@ def print_value(name, path, changes):
     print delta, " - Value changed to ", changes
 
 def print_proxy(name, path, changes):
-    print proxy
+    print proxy.get_value()
 
 def timechecker():
     print datetime.now(), "timechecker working"
