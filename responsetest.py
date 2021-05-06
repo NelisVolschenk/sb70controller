@@ -31,7 +31,7 @@ SysBus = dbus.SystemBus()
 
 proxy1 = VeDbusItemImport(
     bus=SysBus,
-    serviceName="com.victronenergy.vebus.ttyO1",
+    serviceName="com.victronenergy.vebus",
     path="/Ac/Out/L1/P",
     eventCallback=buschecker,
     createsignal=True)
