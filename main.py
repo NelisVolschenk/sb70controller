@@ -26,6 +26,7 @@ class SystemController(object):
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
         self.setup_dbus_services()
+        self.donotcalclist = ["/Settings/CGwacs/AcPowerSetPoint"]
 
     def setup_dbus_services(self):
 
@@ -41,11 +42,12 @@ class SystemController(object):
                 mainlogger.error('Exception in setting up dbus service ', service)
 
     def update_values(self, name, path, changes):
-        print name
-        print path
         for service in self.dbusservices:
             self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
-        self.do_calcs()
+        # Do not do calculations on set
+        if path not in self.donotcalclist:
+            print path
+            self.do_calcs()
 
     def get_values(self):
 
