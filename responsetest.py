@@ -32,6 +32,6 @@ proxy = VeDbusItemImport(
     eventCallback=print_proxy,
     createsignal=True)
 
-#glib.timeout_add_seconds(2, timechecker)
+glib.timeout_add_seconds(2, print_proxy())
 mainloop = glib.MainLoop()
 mainloop.run()
