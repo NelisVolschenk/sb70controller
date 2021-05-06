@@ -219,8 +219,12 @@ class SystemController(object):
                                              - self.dbusservices['L1InPower']['Value'] \
                                              + self.settings['MinInPower'] \
                                              + self.settings['OverThrottle']
+        # Stop throttling once the throttle value is lower than the Overthrottle value
         if self.settings['ThrottleValue'] <= self.settings['OverThrottle']:
             self.settings['ThrottleValue'] = 0
+        # Limit throttle value to the inverter's max power
+        if self.settings['ThrottleValue'] > self.dbusservices['L1SolarMaxPower']['Value']:
+            self.settings['ThrottleValue'] = self.dbusservices['L1SolarMaxPower']['Value']
 
         # set the fronius power to the max minus the throttle amount
         powerlimit = self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['ThrottleValue']
