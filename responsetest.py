@@ -32,4 +32,3 @@ proxy = VeDbusItemImport(
 glib.timeout_add_seconds(2, timechecker)
 mainloop = glib.MainLoop()
 mainloop.run()
-print "mainloop doesn't block"

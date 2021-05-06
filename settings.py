@@ -4,7 +4,8 @@ import datetime
 
 
 settingsdict = {
-    'MaxSleepTime': 2,
+    'MaxSleepTime': 5,
+    'LoopCheckTime': 1,
     'BatteryCapacity': 155000,
     'LowBatteryRechargeTime': 7,
     'WeekStableBatterySoc': 79,
