@@ -13,23 +13,9 @@ from logging.handlers import RotatingFileHandler
 from settings import settingsdict, servicesdict
 from ext.velib_python.vedbus import VeDbusItemImport
 
-# Create a rotating logger
-def create_rotating_log(path):
-
-    # Create the logger
-    logger = logging.getLogger("Main Log")
-    logger.setLevel(logging.INFO)
-    # Create a rotating handler
-    handler = RotatingFileHandler(path, maxBytes=1048576, backupCount=5)
-    # Create a formatter and add to handler
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    # Add the handler to the logger
-    logger.addHandler(handler)
-    return logger
-
 
 class SystemController(object):
+
 
     def __init__(self, bus):
 
@@ -39,7 +25,6 @@ class SystemController(object):
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
-
 
     def getvalues(self):
 
@@ -113,8 +98,6 @@ class SystemController(object):
 
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
-
-
 
         # Set the stable battery SOC depending on the weekday
         # The weekend ends in the same week as it starts (eg. sunday)
@@ -196,9 +179,22 @@ class SystemController(object):
         self.setvalue('AcSetpoint', inpower)
 
 
-
-
 if __name__ == "__main__":
+
+    # Create a rotating logger
+    def create_rotating_log(path):
+        # Create the logger
+        logger = logging.getLogger("Main Log")
+        logger.setLevel(logging.INFO)
+        # Create a rotating handler
+        handler = RotatingFileHandler(path, maxBytes=1048576, backupCount=5)
+        # Create a formatter and add to handler
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        # Add the handler to the logger
+        logger.addHandler(handler)
+        return logger
+
     # setup the logger
     log_file = "log.txt"
     mainlogger = create_rotating_log(log_file)
