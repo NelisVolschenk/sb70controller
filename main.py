@@ -82,7 +82,8 @@ class SystemController(object):
 
     def run(self):
         # Do calcs manually
-        if datetime.datetime.now() - self.prevruntime >= self.settings['MaxSleepTime'] - self.settings['LoopCheckTime']:
+        delta = datetime.datetime.now() - self.prevruntime
+        if delta >= datetime.timedelta(seconds=self.settings['MaxSleepTime'] - self.settings['LoopCheckTime']):
             self.do_calcs()
             mainlogger.warning('Manually running do_calcs')
         # Let this function run continually on the glib loop
