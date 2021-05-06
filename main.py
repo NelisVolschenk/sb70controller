@@ -42,12 +42,12 @@ class SystemController(object):
                 mainlogger.error('Exception in setting up dbus service ', service)
 
     def update_values(self, name, path, changes):
+
         for service in self.dbusservices:
             self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
         # Do not do calculations on set
         if path not in self.donotcalclist:
             self.do_calcs()
-
 
     # This is no longer used
     # def get_values(self):
@@ -90,6 +90,7 @@ class SystemController(object):
 
     # Charge the batteries to allow the cell voltages to equalize
     def charge(self):
+
         if self.settings['DoCharge'] is True:
             if self.settings['ChargeActive'] is False:
                 if datetime.date.today() >= self.settings['ChargeDate']:
@@ -105,6 +106,7 @@ class SystemController(object):
                     self.settings['ChargeActive'] = False
 
     def run(self):
+
         # Do calcs manually
         delta = datetime.datetime.now() - self.prevruntime
         if delta >= datetime.timedelta(seconds=self.settings['MaxSleepTime'] - self.settings['LoopCheckTime']):
