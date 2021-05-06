@@ -32,7 +32,7 @@ SysBus.list_names()
 
 proxy1 = VeDbusItemImport(
     bus=SysBus,
-    serviceName="com.victronenergy.vebus ",
+    serviceName="com.victronenergy.vebus",
     path="/Ac/Out/L1/P",
     eventCallback=buschecker,
     createsignal=True)
