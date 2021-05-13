@@ -12,8 +12,8 @@ settingsdict = {
     'WeekendStartTime': datetime.time(hour=15, minute=0),
     'WeekendEndDay': 6,
     'WeekendEndTime': datetime.time(hour=22, minute=0),
-    'MinInPower': 200,
-    'ThrottleBuffer': 50,
+    'MinInPower': 250,
+    'ThrottleBuffer': 150,
     'OverThrottle': 100,
     'ThrottleValue': 0,
     'Safety': {
