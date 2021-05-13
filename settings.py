@@ -5,7 +5,7 @@ settingsdict = {
     'LoopCheckTime': 1,
     'BatteryCapacity': 40000,
     'LowBatteryRechargeTime': 7,
-    '20%PowerSoc': 85,
+    '20%PowerSoc': 85,  # This needs to be more than either of the StableBatterySoc values
     'WeekStableBatterySoc': 79,
     'WeekendStableBatterySoc': 79,
     'WeekendStartDay': 4,
@@ -13,11 +13,11 @@ settingsdict = {
     'WeekendEndDay': 6,
     'WeekendEndTime': datetime.time(hour=22, minute=0),
     'MinInPower': 250,
-    'ThrottleBuffer': 150,
-    'OverThrottle': 100,
+    'ThrottleBuffer': 150, # The hystyresis value below mininpower for throttling to start
+    'OverThrottle': 200,  # This needs to be larger than ThrottleBuffer
     'PowerLimit': 0,
-    'StrongThrottleSoc': 98,
-    'StrongThrottleBuffer': 600,
+    'StrongThrottleSoc': 98,  # This needs to be more than 20%PowerSOC
+    'StrongThrottleBuffer': 600,  # This needs to be more than ThrottleBuffer
     'Safety': {
         'Active': False,
         'Duration': datetime.timedelta(minutes=5),
