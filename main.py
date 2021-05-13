@@ -27,6 +27,7 @@ class SystemController(object):
         self.prevruntime = datetime.datetime.now()
         self.setup_dbus_services()
         self.donotcalc = donotcalclist
+        self.powerlimit = 0
 
     def setup_dbus_services(self):
 
@@ -210,27 +211,36 @@ class SystemController(object):
 
         # Control the fronius inverter to prevent feed in
         if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower'] - self.settings['ThrottleBuffer']:
-            self.settings['ThrottleValue'] = self.settings['ThrottleValue'] \
-                                             + self.settings['MinInPower'] \
+            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] \
+                              - (self.settings['MinInPower']
+                                 - self.dbusservices['L1InPower']['Value']
+                                 + self.settings['OverThrottle'])
+        elif self.powerlimit < self.settings['OverThrottle']:
+            self.settings['ThrottleValue'] = throttlevalue \
                                              - self.dbusservices['L1InPower']['Value'] \
-                                             + self.settings['OverThrottle']
-        elif self.settings['ThrottleValue'] > self.settings['OverThrottle']:
-            self.settings['ThrottleValue'] = self.settings['ThrottleValue'] \
-                                             - self.dbusservices['L1InPower']['Value'] \
                                              + self.settings['MinInPower'] \
                                              + self.settings['OverThrottle']
-        # Stop throttling once the throttle value is lower than the Overthrottle value
-        if self.settings['ThrottleValue'] <= self.settings['OverThrottle']:
-            self.settings['ThrottleValue'] = 0
-        # Limit throttle value to the inverter's max power
-        if self.settings['ThrottleValue'] > self.dbusservices['L1SolarMaxPower']['Value']:
-            self.settings['ThrottleValue'] = self.dbusservices['L1SolarMaxPower']['Value']
+        # Keep limiting the inverter to a value slightly higher than the current power to prevent spikes in solar power
+        # even when there is no need for actual throttling
+        if self.powerlimit >= self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['OverThrottle']:
+            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] + self.settings['ThrottleBuffer']
+        # Strongly throttle the inverter once the strongthrottle SOC has been reached
+        # Also set the inpower to the strongthrottlebuffer value except:
+        # 1) when strongthrottlebuffer is less than the inpower as calculated in the power calculations
+        # 2) when the inverter is producing less power than strongthrottlebuffer
+        if soc >= self.settings['StrongThrottleSoc']:
+            self.powerlimit = self.dbusservices['L1OutPower']['Value'] - self.settings['StrongThrottleBuffer']
+            inpower = min(max(self.settings['StrongThrottleBuffer'], inpower), self.powerlimit)
+        # Prevent the powerlimit from being larger than the max inverter power or negative
+        if self.powerlimit > self.dbusservices['L1SolarMaxPower']['Value']:
+            self.powerlimit = self.dbusservices['L1SolarMaxPower']['Value']
+        elif self.powerlimit < 0:
+            self.powerlimit = 0
 
         # set the fronius power to the max minus the throttle amount
-        powerlimit = self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['ThrottleValue']
-        self.set_value('L1SolarPowerLimit', powerlimit)
+        self.set_value('L1SolarPowerLimit', self.powerlimit)
 
-        inpower = max(minin, inpower) + self.settings['ThrottleValue']
+        inpower = max(minin, inpower) + throttlevalue
 
         # Send the inputpower to the CCGX control loop
         self.set_value('AcSetpoint', inpower)

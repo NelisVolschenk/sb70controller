@@ -15,7 +15,9 @@ settingsdict = {
     'MinInPower': 250,
     'ThrottleBuffer': 150,
     'OverThrottle': 100,
-    'ThrottleValue': 0,
+    'PowerLimit': 0,
+    'StrongThrottleSoc': 98,
+    'StrongThrottleBuffer': 600,
     'Safety': {
         'Active': False,
         'Duration': datetime.timedelta(minutes=5),
