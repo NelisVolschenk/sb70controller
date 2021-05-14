@@ -37,8 +37,7 @@ settingsdict = {
     'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
     'ChargePower': 15000,
-    'RescanServiceInterval': datetime.timedelta(minutes=10),
-    'PvInverterDbusNames': ['pv_77_1028252']
+    'RescanServiceInterval': datetime.timedelta(minutes=10)
 }
 
 servicesdict = {
@@ -58,15 +57,15 @@ servicesdict = {
                            'Path': "/Ac/Out/L1/P",
                            'Proxy': object,
                            'Value': 0},
-            'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter",
+            'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                                   'Path': "/Ac/MaxPower",
                                   'Proxy': object,
                                   'Value': 0},
-            'L1SolarPower': {'Service': "com.victronenergy.pvinverter",
+            'L1SolarPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                              'Path': "/Ac/Power",
                              'Proxy': object,
                              'Value': 0},
-            'L1SolarPowerLimit':{'Service': "com.victronenergy.pvinverter",
+            'L1SolarPowerLimit':{'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                              'Path': "/Ac/PowerLimit",
                              'Proxy': object,
                              'Value': 0},
@@ -80,8 +79,3 @@ donotcalclist = [
     "/Settings/CGwacs/AcPowerSetPoint",
     "/Ac/PowerLimit"
 ]
-
-for invname in settingsdict['PvInverterDbusNames']:
-    for name in servicesdict:
-        if name.startswith('L1Solar'):
-            servicesdict[name]['Service'] += '.' + invname
