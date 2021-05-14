@@ -5,4 +5,4 @@ sleep 60
 
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 runfile=$parent_path/main.py
-python $runfile &
+python $runfile >> file 2>&1 &
