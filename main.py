@@ -180,7 +180,7 @@ class SystemController(object):
         powerslope = (1 - 0.2) / (self.settings['20%PowerSoc'] - stablebatterysoc)
         # Battery is lower than the setpoint, set inpower = recharge power + outpower
         if soc <= stablebatterysoc - 1:
-            inpower = (2 * (stablebatterysoc - soc) / 100) \
+            inpower = (2.0 * (stablebatterysoc - soc) / 100) \
                       * (self.settings['BatteryCapacity'] /self.settings['LowBatteryRechargeTime']) \
                       + outpower
         # Battery is above the 20% power value, set inpower = 20% of outpower + constant inpower
