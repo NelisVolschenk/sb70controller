@@ -13,7 +13,7 @@ settingsdict = {
     'WeekendEndDay': 6,
     'WeekendEndTime': datetime.time(hour=22, minute=0),
     'MinInPower': 250,
-    'ThrottleBuffer': 150, # The hystyresis value below mininpower for throttling to start
+    'ThrottleBuffer': 150, # The hysteresis value below MinInPower for throttling to start
     'OverThrottle': 200,  # This needs to be larger than ThrottleBuffer
     'StrongThrottleMinSoc': 97,  # This needs to be more than 20%PowerSOC
     'StrongThrottleMaxSoc': 99,  # This needs to be more than StrongThrottleMinSoc
