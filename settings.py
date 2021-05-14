@@ -76,7 +76,10 @@ servicesdict = {
                     'Value': 0}
         }
 
-donotcalclist = ["/Settings/CGwacs/AcPowerSetPoint"]
+donotcalclist = [
+    "/Settings/CGwacs/AcPowerSetPoint",
+    "/Ac/PowerLimit"
+]
 
 for invname in settingsdict['PvInverterDbusNames']:
     for name in servicesdict:
