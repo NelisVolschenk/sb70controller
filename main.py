@@ -265,7 +265,8 @@ class SystemController(object):
         # Send the inputpower to the CCGX control loop
         self.set_value('AcSetpoint', inpower)
 
-        mainlogger.debug(self.dbusservices)
+        # Rescan the services if the correct amount of time has elapsed
+        self.rescan_services()
 
 
 if __name__ == "__main__":
