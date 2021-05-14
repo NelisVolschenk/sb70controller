@@ -218,7 +218,7 @@ class SystemController(object):
                                  + self.settings['OverThrottle'])
             self.throttleactive = True
         # Increase the powerlimit so that the inpower will be equal to mininpower + overthrottle
-        elif self.throttleactive:
+        elif self.dbusservices['L1InPower']['Value']:
             self.powerlimit = self.powerlimit \
                               + self.dbusservices['L1InPower']['Value'] \
                               - self.settings['MinInPower'] \
