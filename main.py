@@ -238,6 +238,7 @@ class SystemController(object):
         elif self.throttleactive:
             self.powerlimit = self.powerlimit + self.settings['ThrottleBuffer']
             self.insurplus = max(self.insurplus - self.settings['ThrottleBuffer'], 0)
+            print "powerlimit: ", self.powerlimit
             if self.dbusservices['L1SolarPower']['Value'] < self.powerlimit + (2 * self.settings['ThrottleBuffer']):
                 self.throttleactive = False
                 self.insurplus = 0
