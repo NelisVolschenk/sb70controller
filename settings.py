@@ -3,11 +3,11 @@ import datetime
 settingsdict = {
     'MaxSleepTime': 5,
     'LoopCheckTime': 1,
-    'BatteryCapacity': 40000,
-    'LowBatteryRechargeTime': 7,
-    '20%PowerSoc': 85,  # This needs to be more than either of the StableBatterySoc values
-    'WeekStableBatterySoc': 79,
-    'WeekendStableBatterySoc': 79,
+    'BatteryCapacity': 20480,
+    'LowBatteryRechargeTime': 4,
+    '20%PowerSoc': 85,
+    'WeekStableBatterySoc': 65,
+    'WeekendStableBatterySoc': 65,
     'WeekendStartDay': 4,
     'WeekendStartTime': datetime.time(hour=15, minute=0),
     'WeekendEndDay': 6,
@@ -36,8 +36,8 @@ settingsdict = {
     'ChargeEndTime': datetime.datetime.now(),
     'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
-    'ChargePower': 30000,
-    'PvInverterDbusNames': ['pv_77_1064614']
+    'ChargePower': 15000,
+    'PvInverterDbusNames': ['pv_77_1028252']
 }
 
 servicesdict = {
