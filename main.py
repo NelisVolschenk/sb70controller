@@ -27,6 +27,7 @@ class SystemController(object):
         self.prevruntime = datetime.datetime.now()
         self.setup_dbus_services()
         self.donotcalc = donotcalclist
+        self.unavailableservices = []
         self.powerlimit = 0
         self.throttleactive = False
         self.insurplus = 0
@@ -41,20 +42,22 @@ class SystemController(object):
                     path=self.dbusservices[service]['Path'],
                     eventCallback=self.update_values,
                     createsignal=True)
-            except dbus.DBusException:
+            except:
                 mainlogger.error('Exception in setting up dbus service ', service)
+                self.unavailableservices.append(service)
 
     def update_values(self, name, path, changes):
 
         for service in self.dbusservices:
-            try:
-                self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
-            except dbus.DBusException:
-                mainlogger.warning('Exception in getting dbus service ', service)
-            try:
-                self.dbusservices[service]['Value'] *= 1
-            except:
-                mainlogger.warning('Non numeric value on ', service)
+            if service not in self.unavailableservices:
+                try:
+                    self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
+                except dbus.DBusException:
+                    mainlogger.warning('Exception in getting dbus service ', service)
+                try:
+                    self.dbusservices[service]['Value'] *= 1
+                except:
+                    mainlogger.warning('Non numeric value on ', service)
         # Do not do calculations on this list
         if path not in self.donotcalc:
             self.do_calcs()
