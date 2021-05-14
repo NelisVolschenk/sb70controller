@@ -15,7 +15,6 @@ settingsdict = {
     'MinInPower': 250,
     'ThrottleBuffer': 150, # The hystyresis value below mininpower for throttling to start
     'OverThrottle': 200,  # This needs to be larger than ThrottleBuffer
-    'PowerLimit': 0,
     'StrongThrottleMinSoc': 97,  # This needs to be more than 20%PowerSOC
     'StrongThrottleMaxSoc': 99,  # This needs to be more than StrongThrottleMinSoc
     'StrongThrottleBuffer': 800,  # This needs to be more than ThrottleBuffer
