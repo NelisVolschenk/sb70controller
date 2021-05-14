@@ -31,6 +31,7 @@ class SystemController(object):
         self.powerlimit = 0
         self.throttleactive = False
         self.insurplus = 0
+        self.rescan_service_time = datetime.datetime.now()
 
     def setup_dbus_services(self):
 
@@ -91,15 +92,16 @@ class SystemController(object):
 
     def set_value(self, service, value):
 
-        try:
-            VeDbusItemImport(
-                bus=self.bus,
-                serviceName=self.dbusservices[service]['Service'],
-                path=self.dbusservices[service]['Path'],
-                eventCallback=None,
-                createsignal=False).set_value(value)
-        except dbus.DBusException:
-            mainlogger.warning('Exception in setting dbus service %s' % service)
+        if service not in self.unavailableservices:
+            try:
+                VeDbusItemImport(
+                    bus=self.bus,
+                    serviceName=self.dbusservices[service]['Service'],
+                    path=self.dbusservices[service]['Path'],
+                    eventCallback=None,
+                    createsignal=False).set_value(value)
+            except dbus.DBusException:
+                mainlogger.warning('Exception in setting dbus service ', service)
 
     # Charge the batteries to allow the cell voltages to equalize
     def charge(self):
@@ -127,6 +129,14 @@ class SystemController(object):
             mainlogger.warning('Manually running do_calcs')
         # Let this function run continually on the glib loop
         return True
+
+    def rescan_services(self):
+
+        if datetime.datetime.now() >= self.rescan_service_time:
+            self.unavailableservices = []
+            self.setup_dbus_services()
+            self.rescan_service_time = datetime.datetime.now() + self.settings['RescanServiceInterval']
+
 
     def do_calcs(self):
 

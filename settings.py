@@ -37,6 +37,7 @@ settingsdict = {
     'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
     'ChargePower': 15000,
+    'RescanServiceInterval': datetime.timedelta(minutes=10),
     'PvInverterDbusNames': ['pv_77_1028252']
 }
 
