@@ -37,7 +37,8 @@ settingsdict = {
     'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
     'ChargePower': 15000,
-    'RescanServiceInterval': datetime.timedelta(minutes=10)
+    'RescanServiceInterval': datetime.timedelta(minutes=10),
+    'SolarInvList': []
 }
 
 servicesdict = {
