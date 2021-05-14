@@ -28,6 +28,7 @@ class SystemController(object):
         self.setup_dbus_services()
         self.donotcalc = donotcalclist
         self.powerlimit = 0
+        self.throttleactive = False
 
     def setup_dbus_services(self):
 
@@ -215,8 +216,9 @@ class SystemController(object):
                               - (self.settings['MinInPower']
                                  - self.dbusservices['L1InPower']['Value']
                                  + self.settings['OverThrottle'])
-        elif self.powerlimit < self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['OverThrottle']:
-            # Increase the powerlimit so that the inpower will be equal to mininpower + overthrottle
+            self.throttleactive = True
+        # Increase the powerlimit so that the inpower will be equal to mininpower + overthrottle
+        elif self.throttleactive:
             self.powerlimit = self.powerlimit \
                               + self.dbusservices['L1InPower']['Value'] \
                               - self.settings['MinInPower'] \
@@ -237,6 +239,9 @@ class SystemController(object):
             self.powerlimit = self.dbusservices['L1SolarMaxPower']['Value']
         elif self.powerlimit < 0:
             self.powerlimit = 0
+
+        # Guess the throttle value
+        throttleguess =
 
         # set the fronius power to the max minus the throttle amount
         self.set_value('L1SolarPowerLimit', self.powerlimit)
