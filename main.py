@@ -246,6 +246,7 @@ class SystemController(object):
         # even when there is no need for actual throttling
         if not self.throttleactive:
             self.powerlimit = self.dbusservices['L1SolarPower']['Value'] + self.settings['ThrottleBuffer']
+            print "powerlimit: ", self.powerlimit
         # Strongly throttle the inverter once the strongthrottle SOC has been reached
         if soc >= self.settings['StrongThrottleMinSoc']:
             strongthrottlevalue = (soc - self.settings['StrongThrottleMinSoc']) \
