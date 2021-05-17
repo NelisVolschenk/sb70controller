@@ -27,6 +27,11 @@ class SystemController(object):
         self.prevruntime = datetime.datetime.now()
         self.setup_dbus_services()
         self.donotcalc = donotcalclist
+        self.unavailableservices = []
+        self.powerlimit = 0
+        self.throttleactive = False
+        self.insurplus = 0
+        self.rescan_service_time = datetime.datetime.now()
 
     def setup_dbus_services(self):
 
@@ -38,20 +43,22 @@ class SystemController(object):
                     path=self.dbusservices[service]['Path'],
                     eventCallback=self.update_values,
                     createsignal=True)
-            except dbus.DBusException:
+            except:
                 mainlogger.error('Exception in setting up dbus service ', service)
+                self.unavailableservices.append(service)
 
     def update_values(self, name, path, changes):
 
         for service in self.dbusservices:
-            try:
-                self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
-            except dbus.DBusException:
-                mainlogger.warning('Exception in getting dbus service ', service)
-            try:
-                self.dbusservices[service]['Value'] *= 1
-            except:
-                mainlogger.warning('Non numeric value on ', service)
+            if service not in self.unavailableservices:
+                try:
+                    self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
+                except dbus.DBusException:
+                    mainlogger.warning('Exception in getting dbus service ', service)
+                try:
+                    self.dbusservices[service]['Value'] *= 1
+                except:
+                    mainlogger.warning('Non numeric value on ', service)
         # Do not do calculations on this list
         if path not in self.donotcalc:
             self.do_calcs()
@@ -85,15 +92,16 @@ class SystemController(object):
 
     def set_value(self, service, value):
 
-        try:
-            VeDbusItemImport(
-                bus=self.bus,
-                serviceName=self.dbusservices[service]['Service'],
-                path=self.dbusservices[service]['Path'],
-                eventCallback=None,
-                createsignal=False).set_value(value)
-        except dbus.DBusException:
-            mainlogger.warning('Exception in setting dbus service %s' % service)
+        if service not in self.unavailableservices:
+            try:
+                VeDbusItemImport(
+                    bus=self.bus,
+                    serviceName=self.dbusservices[service]['Service'],
+                    path=self.dbusservices[service]['Path'],
+                    eventCallback=None,
+                    createsignal=False).set_value(value)
+            except dbus.DBusException:
+                mainlogger.warning('Exception in setting dbus service ', service)
 
     # Charge the batteries to allow the cell voltages to equalize
     def charge(self):
@@ -121,6 +129,14 @@ class SystemController(object):
             mainlogger.warning('Manually running do_calcs')
         # Let this function run continually on the glib loop
         return True
+
+    def rescan_services(self):
+
+        if datetime.datetime.now() >= self.rescan_service_time:
+            self.unavailableservices = []
+            self.setup_dbus_services()
+            self.rescan_service_time = datetime.datetime.now() + self.settings['RescanServiceInterval']
+
 
     def do_calcs(self):
 
@@ -164,7 +180,7 @@ class SystemController(object):
         powerslope = (1 - 0.2) / (self.settings['20%PowerSoc'] - stablebatterysoc)
         # Battery is lower than the setpoint, set inpower = recharge power + outpower
         if soc <= stablebatterysoc - 1:
-            inpower = (2 * (stablebatterysoc - soc) / 100) \
+            inpower = (2.0 * (stablebatterysoc - soc) / 100) \
                       * (self.settings['BatteryCapacity'] /self.settings['LowBatteryRechargeTime']) \
                       + outpower
         # Battery is above the 20% power value, set inpower = 20% of outpower + constant inpower
@@ -210,32 +226,47 @@ class SystemController(object):
 
         # Control the fronius inverter to prevent feed in
         if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower'] - self.settings['ThrottleBuffer']:
-            self.settings['ThrottleValue'] = self.settings['ThrottleValue'] \
-                                             + self.settings['MinInPower'] \
-                                             - self.dbusservices['L1InPower']['Value'] \
-                                             + self.settings['OverThrottle']
-        elif self.settings['ThrottleValue'] > self.settings['OverThrottle']:
-            self.settings['ThrottleValue'] = self.settings['ThrottleValue'] \
-                                             - self.dbusservices['L1InPower']['Value'] \
-                                             + self.settings['MinInPower'] \
-                                             + self.settings['OverThrottle']
-        # Stop throttling once the throttle value is lower than the Overthrottle value
-        if self.settings['ThrottleValue'] <= self.settings['OverThrottle']:
-            self.settings['ThrottleValue'] = 0
-        # Limit throttle value to the inverter's max power
-        if self.settings['ThrottleValue'] > self.dbusservices['L1SolarMaxPower']['Value']:
-            self.settings['ThrottleValue'] = self.dbusservices['L1SolarMaxPower']['Value']
+            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] \
+                              - (self.settings['MinInPower']
+                                 - self.dbusservices['L1InPower']['Value']
+                                 + self.settings['OverThrottle'])
+            self.throttleactive = True
+            self.insurplus = self.settings['MinInPower'] \
+                             + self.settings['OverThrottle'] \
+                             - self.dbusservices['L1InPower']['Value']
+        # Increase the powerlimit so that we can utilize the solar power
+        elif self.throttleactive:
+            self.powerlimit = self.powerlimit + self.settings['ThrottleBuffer']
+            self.insurplus = max(self.insurplus - self.settings['ThrottleBuffer'], 0)
+            if self.dbusservices['L1SolarPower']['Value'] < self.powerlimit + (2 * self.settings['ThrottleBuffer']):
+                self.throttleactive = False
+                self.insurplus = 0
+        # Keep limiting the inverter to a value slightly higher than the current power to prevent spikes in solar power
+        # even when there is no need for actual throttling
+        if not self.throttleactive:
+            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] + self.settings['ThrottleBuffer']
+        # Strongly throttle the inverter once the strongthrottle SOC has been reached
+        if soc >= self.settings['StrongThrottleMinSoc']:
+            strongthrottlevalue = (soc - self.settings['StrongThrottleMinSoc']) \
+                                  * self.settings['StrongThrottleBuffer']\
+                                  / (self.settings['StrongThrottleMaxSoc'] - self.settings['StrongThrottleMinSoc'])
+            self.powerlimit = self.dbusservices['L1OutPower']['Value'] - strongthrottlevalue
+        # Prevent the powerlimit from being larger than the max inverter power or negative
+        if self.powerlimit > self.dbusservices['L1SolarMaxPower']['Value']:
+            self.powerlimit = self.dbusservices['L1SolarMaxPower']['Value']
+        elif self.powerlimit < 0:
+            self.powerlimit = 0
 
-        # set the fronius power to the max minus the throttle amount
-        powerlimit = self.dbusservices['L1SolarMaxPower']['Value'] - self.settings['ThrottleValue']
-        self.set_value('L1SolarPowerLimit', powerlimit)
+        # set the fronius power to the powerlimit
+        self.set_value('L1SolarPowerLimit', self.powerlimit)
 
-        inpower = max(minin, inpower) + self.settings['ThrottleValue']
+        inpower = max(minin, inpower) + self.insurplus
 
         # Send the inputpower to the CCGX control loop
         self.set_value('AcSetpoint', inpower)
 
-        mainlogger.debug(self.dbusservices)
+        # Rescan the services if the correct amount of time has elapsed
+        self.rescan_services()
 
 
 if __name__ == "__main__":
@@ -261,6 +292,7 @@ if __name__ == "__main__":
     DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
     # start the controller
+    mainlogger.info('Starting SystemController')
     controller = SystemController(bus)
     glib.timeout_add_seconds(controller.settings['LoopCheckTime'], controller.run)
     mainloop = glib.MainLoop()

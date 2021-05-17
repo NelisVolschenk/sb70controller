@@ -2,4 +2,7 @@
 
 # sleep to allow the system to boot before initiating
 sleep 60
-python /data/home/root/sb70controller/Main.py &
+
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+runfile=$parent_path/main.py
+python $runfile >> output.txt 2>&1 &

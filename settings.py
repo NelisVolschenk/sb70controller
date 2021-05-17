@@ -3,19 +3,21 @@ import datetime
 settingsdict = {
     'MaxSleepTime': 5,
     'LoopCheckTime': 1,
-    'BatteryCapacity': 40000,
-    'LowBatteryRechargeTime': 7,
+    'BatteryCapacity': 20480,
+    'LowBatteryRechargeTime': 4,
     '20%PowerSoc': 85,
-    'WeekStableBatterySoc': 79,
-    'WeekendStableBatterySoc': 79,
+    'WeekStableBatterySoc': 65,
+    'WeekendStableBatterySoc': 65,
     'WeekendStartDay': 4,
     'WeekendStartTime': datetime.time(hour=15, minute=0),
     'WeekendEndDay': 6,
     'WeekendEndTime': datetime.time(hour=22, minute=0),
     'MinInPower': 250,
-    'ThrottleBuffer': 150,
-    'OverThrottle': 100,
-    'ThrottleValue': 0,
+    'ThrottleBuffer': 150, # The hysteresis value below MinInPower for throttling to start
+    'OverThrottle': 200,  # This needs to be larger than ThrottleBuffer
+    'StrongThrottleMinSoc': 97,  # This needs to be more than 20%PowerSOC
+    'StrongThrottleMaxSoc': 99,  # This needs to be more than StrongThrottleMinSoc
+    'StrongThrottleBuffer': 800,  # This needs to be more than ThrottleBuffer
     'Safety': {
         'Active': False,
         'Duration': datetime.timedelta(minutes=5),
@@ -34,8 +36,9 @@ settingsdict = {
     'ChargeEndTime': datetime.datetime.now(),
     'ChargeInterval': datetime.timedelta(weeks=1),
     'ChargeActive': False,
-    'ChargePower': 30000,
-    'PvInverterDbusNames': ['pv_77_1064614']
+    'ChargePower': 15000,
+    'RescanServiceInterval': datetime.timedelta(minutes=10),
+    'SolarInvList': []
 }
 
 servicesdict = {
@@ -55,15 +58,15 @@ servicesdict = {
                            'Path': "/Ac/Out/L1/P",
                            'Proxy': object,
                            'Value': 0},
-            'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter",
+            'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                                   'Path': "/Ac/MaxPower",
                                   'Proxy': object,
                                   'Value': 0},
-            'L1SolarPower': {'Service': "com.victronenergy.pvinverter",
+            'L1SolarPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                              'Path': "/Ac/Power",
                              'Proxy': object,
                              'Value': 0},
-            'L1SolarPowerLimit':{'Service': "com.victronenergy.pvinverter",
+            'L1SolarPowerLimit':{'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                              'Path': "/Ac/PowerLimit",
                              'Proxy': object,
                              'Value': 0},
@@ -73,9 +76,7 @@ servicesdict = {
                     'Value': 0}
         }
 
-donotcalclist = ["/Settings/CGwacs/AcPowerSetPoint"]
-
-for invname in settingsdict['PvInverterDbusNames']:
-    for name in servicesdict:
-        if name.startswith('L1Solar'):
-            servicesdict[name]['Service'] += '.' + invname
+donotcalclist = [
+    "/Settings/CGwacs/AcPowerSetPoint",
+    "/Ac/PowerLimit"
+]
