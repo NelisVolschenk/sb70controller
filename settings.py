@@ -72,7 +72,7 @@ servicesdict = {
             'Soc': {'Service': "com.victronenergy.system",
                     'Path': "/Dc/Battery/Soc",
                     'Proxy': object,
-                    'Value': 0}
+                    'Value': 80}
         }
 
 donotcalclist = [
