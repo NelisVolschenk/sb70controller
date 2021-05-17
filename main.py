@@ -130,13 +130,6 @@ class SystemController(object):
         # Let this function run continually on the glib loop
         return True
 
-    def rescan_services(self):
-
-        if datetime.datetime.now() >= self.rescan_service_time:
-            self.unavailableservices = []
-            self.setup_dbus_services()
-            self.rescan_service_time = datetime.datetime.now() + self.settings['RescanServiceInterval']
-
 
     def do_calcs(self):
 
@@ -266,7 +259,10 @@ class SystemController(object):
         self.set_value('AcSetpoint', inpower)
 
         # Rescan the services if the correct amount of time has elapsed
-        self.rescan_services()
+        if datetime.datetime.now() >= self.rescan_service_time:
+            self.unavailableservices = []
+            self.setup_dbus_services()
+            self.rescan_service_time = datetime.datetime.now() + self.settings['RescanServiceInterval']
 
 
 if __name__ == "__main__":
