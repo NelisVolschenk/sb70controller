@@ -60,6 +60,8 @@ class SystemController(object):
                     self.dbusservices[service]['Value'] *= 1
                 except:
                     mainlogger.warning('Non numeric value on %s' % service)
+                    # Use the default value as in settings.py
+                    self.dbusservices[service]['Value'] = settingsdict[service]['Value']
         # Do not do calculations on this list
         if path not in self.donotcalc:
             self.do_calcs()
