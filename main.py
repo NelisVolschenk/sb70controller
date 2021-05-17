@@ -9,6 +9,7 @@ import os
 import sys
 import datetime
 import logging
+import copy
 from logging.handlers import RotatingFileHandler
 from settings import settingsdict, servicesdict, donotcalclist
 from ext.velib_python.vedbus import VeDbusItemImport
@@ -20,12 +21,12 @@ class SystemController(object):
     def __init__(self, bus):
 
         self.bus = bus
-        self.settings = settingsdict
-        self.dbusservices = servicesdict
+        self.settings = copy.deepcopy(settingsdict)
+        self.dbusservices = copy.deepcopy(servicesdict)
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
-        self.donotcalc = donotcalclist
+        self.donotcalc = copy.deepcopy(donotcalclist)
         self.unavailableservices = []
         self.powerlimit = 0
         self.throttleactive = False
