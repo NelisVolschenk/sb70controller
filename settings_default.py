@@ -87,7 +87,7 @@ pv_services_structure = {
                    'Proxy': object,
                    'Value': 0}
 }
-
+# Generate the pvdict
 for line in pvdict:
     for inverter in pvdict[line]['InverterList']:
         pvdict[line]['Services'][inverter] = copy.deepcopy(pv_services_structure)

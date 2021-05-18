@@ -11,7 +11,7 @@ import datetime
 import logging
 import copy
 from logging.handlers import RotatingFileHandler
-from settings import settingsdict, servicesdict, donotcalclist
+from settings_default import settingsdict, servicesdict, donotcalclist, pvdict # Change this for production
 from ext.velib_python.vedbus import VeDbusItemImport
 
 
@@ -23,10 +23,11 @@ class SystemController(object):
         self.bus = bus
         self.settings = copy.deepcopy(settingsdict)
         self.dbusservices = copy.deepcopy(servicesdict)
+        self.donotcalc = copy.deepcopy(donotcalclist)
+        self.pvservices = copy.deepcopy(pvdict)
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
-        self.donotcalc = copy.deepcopy(donotcalclist)
         self.unavailableservices = []
         self.powerlimit = 0
         self.throttleactive = False
@@ -101,6 +102,8 @@ class SystemController(object):
 
     def control_pv(self, soc):
 
+        # Update the pv inverter combined list
+        # TODO figure out a way in which to do calculations with only the available pv inverters
         # Control the fronius inverter to prevent feed in
         if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower'] - self.settings['ThrottleBuffer']:
             self.powerlimit = self.dbusservices['L1SolarPower']['Value'] \
@@ -154,7 +157,8 @@ class SystemController(object):
         weekend = False
         minin = self.settings['MinInPower']
         soc = self.dbusservices['Soc']['Value']
-        outpower = max(self.dbusservices['L1OutPower']['Value'] - self.dbusservices['L1SolarPower']['Value'], 0)
+        outpower = max(self.dbusservices['L1OutPower']['Value'], 0)
+
 
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
