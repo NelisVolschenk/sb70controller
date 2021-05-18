@@ -9,6 +9,7 @@ import os
 import sys
 import datetime
 import logging
+import copy
 from logging.handlers import RotatingFileHandler
 from settings import settingsdict, servicesdict, donotcalclist
 from ext.velib_python.vedbus import VeDbusItemImport
@@ -20,18 +21,19 @@ class SystemController(object):
     def __init__(self, bus):
 
         self.bus = bus
-        self.settings = settingsdict
-        self.dbusservices = servicesdict
+        self.settings = copy.deepcopy(settingsdict)
+        self.dbusservices = copy.deepcopy(servicesdict)
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
-        self.setup_dbus_services()
-        self.donotcalc = donotcalclist
+        self.donotcalc = copy.deepcopy(donotcalclist)
         self.unavailableservices = []
         self.powerlimit = 0
         self.throttleactive = False
         self.insurplus = 0
         self.rescan_service_time = datetime.datetime.now()
+        # Ensure this is always at the bottom
+        self.setup_dbus_services()
 
     def setup_dbus_services(self):
 
@@ -44,7 +46,7 @@ class SystemController(object):
                     eventCallback=self.update_values,
                     createsignal=True)
             except:
-                mainlogger.error('Exception in setting up dbus service ', service)
+                mainlogger.error('Exception in setting up dbus service %s' % service)
                 self.unavailableservices.append(service)
 
     def update_values(self, name, path, changes):
@@ -54,11 +56,13 @@ class SystemController(object):
                 try:
                     self.dbusservices[service]['Value'] = self.dbusservices[service]['Proxy'].get_value()
                 except dbus.DBusException:
-                    mainlogger.warning('Exception in getting dbus service ', service)
+                    mainlogger.warning('Exception in getting dbus service %s' % service)
                 try:
                     self.dbusservices[service]['Value'] *= 1
                 except:
-                    mainlogger.warning('Non numeric value on ', service)
+                    mainlogger.warning('Non numeric value on %s' % service)
+                    # Use the default value as in settings.py
+                    self.dbusservices[service]['Value'] = servicesdict[service]['Value']
         # Do not do calculations on this list
         if path not in self.donotcalc:
             self.do_calcs()
@@ -101,7 +105,7 @@ class SystemController(object):
                     eventCallback=None,
                     createsignal=False).set_value(value)
             except dbus.DBusException:
-                mainlogger.warning('Exception in setting dbus service ', service)
+                mainlogger.warning('Exception in setting dbus service %s' % service)
 
     # Charge the batteries to allow the cell voltages to equalize
     def charge(self):

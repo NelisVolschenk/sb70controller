@@ -3,11 +3,11 @@ import datetime
 settingsdict = {
     'MaxSleepTime': 5,
     'LoopCheckTime': 1,
-    'BatteryCapacity': 20480,
-    'LowBatteryRechargeTime': 4,
+    'BatteryCapacity': 40000,
+    'LowBatteryRechargeTime': 6,
     '20%PowerSoc': 85,
-    'WeekStableBatterySoc': 65,
-    'WeekendStableBatterySoc': 65,
+    'WeekStableBatterySoc': 80,
+    'WeekendStableBatterySoc': 80,
     'WeekendStartDay': 4,
     'WeekendStartTime': datetime.time(hour=15, minute=0),
     'WeekendEndDay': 6,
@@ -38,7 +38,6 @@ settingsdict = {
     'ChargeActive': False,
     'ChargePower': 15000,
     'RescanServiceInterval': datetime.timedelta(minutes=10),
-    'SolarInvList': []
 }
 
 servicesdict = {
@@ -73,7 +72,7 @@ servicesdict = {
             'Soc': {'Service': "com.victronenergy.system",
                     'Path': "/Dc/Battery/Soc",
                     'Proxy': object,
-                    'Value': 0}
+                    'Value': 80}
         }
 
 donotcalclist = [
