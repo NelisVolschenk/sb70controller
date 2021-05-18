@@ -58,48 +58,39 @@ servicesdict = {
                            'Path': "/Ac/Out/L1/P",
                            'Proxy': object,
                            'Value': 0},
-            'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
-                                'Path': "/Ac/MaxPower",
-                                'Proxy': object,
-                                'Value': 0},
-            'L1SolarPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
-                             'Path': "/Ac/Power",
-                             'Proxy': object,
-                             'Value': 0},
-            'L1SolarPowerLimit':{'Service': "com.victronenergy.pvinverter.pv_77_1028252",
-                             'Path': "/Ac/PowerLimit",
-                             'Proxy': object,
-                             'Value': 0},
             'Soc': {'Service': "com.victronenergy.system",
                     'Path': "/Dc/Battery/Soc",
                     'Proxy': object,
                     'Value': 80}
         }
 
+
+
 pvdict = {
     'L1': {
-        'InverterList': [], # This should look something like this: pv_77_1028252
-        'ServicesStructure': {
-            'MaxPower': {'Service': "com.victronenergy.pvinverter",
-                              'Path': "/Ac/MaxPower",
-                              'Proxy': object,
-                              'Value': 0},
-            'Power': {'Service': "com.victronenergy.pvinverter",
-                           'Path': "/Ac/Power",
-                           'Proxy': object,
-                           'Value': 0},
-            'PowerLimit': {'Service': "com.victronenergy.pvinverter",
-                                'Path': "/Ac/PowerLimit",
-                                'Proxy': object,
-                                'Value': 0}
-        },
+        'InverterList': [], # This should look something like this: pv_77_1028252, pv_77_1028251
         'Services': {},
-
     },
 }
+
+pv_services_structure = {
+    'MaxPower': {'Service': "com.victronenergy.pvinverter",
+                 'Path': "/Ac/MaxPower",
+                 'Proxy': object,
+                 'Value': 0},
+    'Power': {'Service': "com.victronenergy.pvinverter",
+              'Path': "/Ac/Power",
+              'Proxy': object,
+              'Value': 0},
+    'PowerLimit': {'Service': "com.victronenergy.pvinverter",
+                   'Path': "/Ac/PowerLimit",
+                   'Proxy': object,
+                   'Value': 0}
+}
+
 for line in pvdict:
     for inverter in pvdict[line]['InverterList']:
-        pvdict[line]['Services'][inverter] = copy.deepcopy(pvdict[line]['ServicesStructure'])
+        pvdict[line]['Services'][inverter] = copy.deepcopy(pv_services_structure)
         for service in pvdict[line]['Services'][inverter]:
             pvdict[line]['Services'][inverter][service]['Service'] += '.' + inverter
 
