@@ -1,4 +1,5 @@
 import datetime
+import copy
 
 settingsdict = {
     'MaxSleepTime': 5,
@@ -50,17 +51,17 @@ servicesdict = {
                           'Proxy': object,
                           'Value': 0},
             'L1InPower': {'Service': "com.victronenergy.vebus.ttyO1",
-                           'Path': "/Ac/ActiveIn/L1/P",
-                           'Proxy': object,
-                           'Value': 0},
+                          'Path': "/Ac/ActiveIn/L1/P",
+                          'Proxy': object,
+                          'Value': 0},
             'L1OutPower': {'Service': "com.victronenergy.vebus.ttyO1",
                            'Path': "/Ac/Out/L1/P",
                            'Proxy': object,
                            'Value': 0},
             'L1SolarMaxPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
-                                  'Path': "/Ac/MaxPower",
-                                  'Proxy': object,
-                                  'Value': 0},
+                                'Path': "/Ac/MaxPower",
+                                'Proxy': object,
+                                'Value': 0},
             'L1SolarPower': {'Service': "com.victronenergy.pvinverter.pv_77_1028252",
                              'Path': "/Ac/Power",
                              'Proxy': object,
@@ -75,6 +76,35 @@ servicesdict = {
                     'Value': 80}
         }
 
+pvdict = {
+    'L1': {
+        'InverterList': [], # This should look something like this: pv_77_1028252
+        'ServicesStructure': {
+            'MaxPower': {'Service': "com.victronenergy.pvinverter",
+                              'Path': "/Ac/MaxPower",
+                              'Proxy': object,
+                              'Value': 0},
+            'Power': {'Service': "com.victronenergy.pvinverter",
+                           'Path': "/Ac/Power",
+                           'Proxy': object,
+                           'Value': 0},
+            'PowerLimit': {'Service': "com.victronenergy.pvinverter",
+                                'Path': "/Ac/PowerLimit",
+                                'Proxy': object,
+                                'Value': 0}
+        },
+        'Services': {},
+
+    },
+}
+for line in pvdict:
+    for inverter in pvdict[line]['InverterList']:
+        pvdict[line]['Services'][inverter] = copy.deepcopy(pvdict[line]['ServicesStructure'])
+        for service in pvdict[line]['Services'][inverter]:
+            pvdict[line]['Services'][inverter][service]['Service'] += '.' + inverter
+
+
+# TODO change this to a dictionary so that the name can be included
 donotcalclist = [
     "/Settings/CGwacs/AcPowerSetPoint",
     "/Ac/PowerLimit"
