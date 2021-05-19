@@ -6,7 +6,7 @@ settingsdict = {
     'LoopCheckTime': 1,
     'BatteryCapacity': 40000,
     'LowBatteryRechargeTime': 6,
-    '20%PowerSoc': 85,
+    '20%PowerSoc': 95,
     'WeekStableBatterySoc': 80,
     'WeekendStableBatterySoc': 80,
     'WeekendStartDay': 4,
