@@ -34,7 +34,7 @@ class SystemController(object):
         self.powerlimit = 0
         self.throttleactive = False
         self.insurplus = 0
-        self.pvcontrollable = False
+        self.pvcontrollable = True # TODO make this a true check later
         self.rescan_service_time = datetime.datetime.now()
 
         # Ensure this is always at the bottom
