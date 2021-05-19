@@ -11,7 +11,7 @@ import datetime
 import logging
 import copy
 from logging.handlers import RotatingFileHandler
-from settings_default import settingsdict, servicesdict, pvdict, donotcalclist, servicelist # Change this for production
+from settings import settingsdict, servicesdict, pvdict, donotcalclist, servicelist # Change this for production
 from ext.velib_python.vedbus import VeDbusItemImport
 
 
