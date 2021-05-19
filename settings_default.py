@@ -98,5 +98,3 @@ donotcalclist = [
     "/Settings/CGwacs/AcPowerSetPoint",
     "/Ac/PowerLimit"
 ]
-
-servicelist = []
