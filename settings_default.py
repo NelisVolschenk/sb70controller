@@ -66,7 +66,7 @@ servicesdict = {
 
 pvdict = {
     'L1': {
-        'InverterList': ['pv_77_1064614', 'pv_77_1028252'], # This should look something like this: pv_77_1028252, pv_77_1028251
+        'InverterList': ['pv_77_1064614'], # This should look something like this: pv_77_1028252, pv_77_1028251
         'Inverters': {},
     },
 }
