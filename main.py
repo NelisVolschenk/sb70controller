@@ -300,6 +300,7 @@ class SystemController(object):
         # Rescan the services if the correct amount of time has elapsed
         if datetime.datetime.now() >= self.rescan_service_time:
             self.unavailableservices = []
+            self.unavailablepvinverters = []
             self.setup_dbus_services()
             self.rescan_service_time = datetime.datetime.now() + self.settings['RescanServiceInterval']
 
