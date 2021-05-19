@@ -11,7 +11,7 @@ import datetime
 import logging
 import copy
 from logging.handlers import RotatingFileHandler
-from settings_default import settingsdict, servicesdict, donotcalclist, pvdict # Change this for production
+from settings_default import settingsdict, servicesdict, pvdict, donotcalclist, servicelist # Change this for production
 from ext.velib_python.vedbus import VeDbusItemImport
 
 
@@ -23,12 +23,14 @@ class SystemController(object):
         self.bus = bus
         self.settings = copy.deepcopy(settingsdict)
         self.dbusservices = copy.deepcopy(servicesdict)
-        self.donotcalc = copy.deepcopy(donotcalclist)
         self.pvservices = copy.deepcopy(pvdict)
+        self.donotcalc = copy.deepcopy(donotcalclist)
+
         self.safetylistcounter = 0
         self.outputpowerlist = [0 for i in range(0, self.settings['Safety']['BuildupIterations'])]
         self.prevruntime = datetime.datetime.now()
         self.unavailableservices = []
+        self.unavailablepvinverters = []
         self.powerlimit = 0
         self.throttleactive = False
         self.insurplus = 0
@@ -52,8 +54,24 @@ class SystemController(object):
                 mainlogger.error('Exception in setting up dbus service %s' % service)
                 self.unavailableservices.append(service)
 
+        # Also set up the pv inverter services
+        for line in self.pvservices:
+            for inverter, invservices in self.pvservices[line]['Inverters'].items():
+                try:
+                    for service in invservices:
+                        invservices[service]['Proxy'] = VeDbusItemImport(
+                            bus=self.bus,
+                            serviceName=invservices[service]['Service'],
+                            path=invservices[service]['Path'],
+                            eventCallback=self.update_values,
+                            createsignal=True)
+                except:
+                    mainlogger.error('Exception in setting up pv inverter %s' % inverter)
+                    self.unavailablepvinverters.append(inverter)
+
     def update_values(self, name, path, changes):
 
+        # Update the dbusservices dictionary
         for service in self.dbusservices:
             if service not in self.unavailableservices:
                 try:
@@ -66,18 +84,37 @@ class SystemController(object):
                     mainlogger.warning('Non numeric value on %s' % service)
                     # Use the default value as in settings.py
                     self.dbusservices[service]['Value'] = servicesdict[service]['Value']
+        # Update the pvservices dictionary
+        for line in self.pvservices:
+            for inverter, invservices in self.pvservices[line]['Inverters'].items():
+                if inverter not in self.unavailablepvinverters:
+                    for service in invservices:
+                        try:
+                            invservices[service]['Value'] = invservices[service]['Proxy'].get_value()
+                        except dbus.DBusException:
+                            mainlogger.warning('Exception in getting dbus service %s for %s' % (service, inverter))
+                        try:
+                            invservices[service]['Value'] *= 1
+                        except:
+                            mainlogger.warning('Non numeric value on %s' % service)
+                            # Use the default value as in settings.py
+                            invservices[service]['Value'] = pvdict[line]['Inverters'][inverter][service]['Value']
+
         # Do not do calculations on this list
         if path not in self.donotcalc:
             self.do_calcs()
 
-    def set_value(self, service, value):
+    def set_value(self, service, value, dictionary = None):
+        # TODO this is a temporary fix, remove the default value later
+        if dictionary is None:
+            dictionary = self.dbusservices
 
         if service not in self.unavailableservices:
             try:
                 VeDbusItemImport(
                     bus=self.bus,
-                    serviceName=self.dbusservices[service]['Service'],
-                    path=self.dbusservices[service]['Path'],
+                    serviceName=dictionary[service]['Service'],
+                    path=dictionary[service]['Path'],
                     eventCallback=None,
                     createsignal=False).set_value(value)
             except dbus.DBusException:
@@ -104,9 +141,17 @@ class SystemController(object):
 
         # Update the pv inverter combined list
         # TODO figure out a way in which to do calculations with only the available pv inverters
+        solartotals = {}
+        for line in self.pvservices:
+            solartotals[line] = {'Power': 0, 'MaxPower': 0}
+            for inverter, invservices in self.pvservices[line]['Inverters'].items():
+                if inverter not in self.unavailablepvinverters:
+                    solartotals[line]['Power'] += invservices['Power']['Value']
+                    solartotals[line]['MaxPower'] += invservices['MaxPower']['Value']
+
         # Control the fronius inverter to prevent feed in
         if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower'] - self.settings['ThrottleBuffer']:
-            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] \
+            self.powerlimit = solartotals['L1']['Power'] \
                               - (self.settings['MinInPower']
                                  - self.dbusservices['L1InPower']['Value']
                                  + self.settings['OverThrottle'])
@@ -118,13 +163,13 @@ class SystemController(object):
         elif self.throttleactive:
             self.powerlimit = self.powerlimit + self.settings['ThrottleBuffer']
             self.insurplus = max(self.insurplus - self.settings['ThrottleBuffer'], 0)
-            if self.dbusservices['L1SolarPower']['Value'] < self.powerlimit + (2 * self.settings['ThrottleBuffer']):
+            if solartotals['L1']['Power'] < self.powerlimit + (2 * self.settings['ThrottleBuffer']):
                 self.throttleactive = False
                 self.insurplus = 0
         # Keep limiting the inverter to a value slightly higher than the current power to prevent spikes in solar power
         # even when there is no need for actual throttling
         if not self.throttleactive:
-            self.powerlimit = self.dbusservices['L1SolarPower']['Value'] + self.settings['ThrottleBuffer']
+            self.powerlimit = solartotals['L1']['Power'] + self.settings['ThrottleBuffer']
         # Strongly throttle the inverter once the strongthrottle SOC has been reached
         if soc >= self.settings['StrongThrottleMinSoc']:
             strongthrottlevalue = (soc - self.settings['StrongThrottleMinSoc']) \
@@ -132,13 +177,16 @@ class SystemController(object):
                                   / (self.settings['StrongThrottleMaxSoc'] - self.settings['StrongThrottleMinSoc'])
             self.powerlimit = self.dbusservices['L1OutPower']['Value'] - strongthrottlevalue
         # Prevent the powerlimit from being larger than the max inverter power or negative
-        if self.powerlimit > self.dbusservices['L1SolarMaxPower']['Value']:
-            self.powerlimit = self.dbusservices['L1SolarMaxPower']['Value']
+        if self.powerlimit > solartotals['L1']['MaxPower']:
+            self.powerlimit = solartotals['L1']['MaxPower']
         elif self.powerlimit < 0:
             self.powerlimit = 0
 
-        # set the fronius power to the powerlimit
-        self.set_value('L1SolarPowerLimit', self.powerlimit)
+        # set the fronius power to the powerlimit proportionally to the total max power
+        for inverter, invservices in self.pvservices['L1']['Inverters'].items():
+            if inverter not in self.unavailablepvinverters:
+                inverterpowerlimit = self.powerlimit * (invservices['MaxPower']['Value'] / solartotals['L1']['MaxPower'])
+                self.set_value('PowerLimit', inverterpowerlimit, invservices)
 
     def run(self):
 
