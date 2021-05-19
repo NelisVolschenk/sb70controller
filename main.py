@@ -182,10 +182,10 @@ class SystemController(object):
         elif self.powerlimit < 0:
             self.powerlimit = 0
 
-        # set the fronius power to the powerlimit proportionally to the total max power
+        # set the fronius powerlimit for each inverter in proportion to the total power currently being produced
         for inverter, invservices in self.pvservices['L1']['Inverters'].items():
             if inverter not in self.unavailablepvinverters:
-                inverterpowerlimit = self.powerlimit * (invservices['MaxPower']['Value'] / solartotals['L1']['MaxPower'])
+                inverterpowerlimit = self.powerlimit * (invservices['Power']['Value'] / solartotals['L1']['Power'])
                 self.set_value('PowerLimit', inverterpowerlimit, invservices)
 
     def run(self):
