@@ -186,7 +186,7 @@ class SystemController(object):
         for inverter, invservices in self.pvservices['L1']['Inverters'].items():
             if inverter not in self.unavailablepvinverters:
                 if solartotals['L1']['Power'] == 0:
-                    inverterpowerlimit = 0
+                    inverterpowerlimit = self.settings['ThrottleBuffer']
                 else:
                     inverterpowerlimit = self.powerlimit * (invservices['Power']['Value'] / solartotals['L1']['Power'])
                 self.set_value('PowerLimit', inverterpowerlimit, invservices)
