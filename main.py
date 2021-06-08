@@ -140,7 +140,6 @@ class SystemController(object):
     def control_pv(self, soc):
 
         # Update the pv inverter combined list
-        # TODO figure out a way in which to do calculations with only the available pv inverters
         solartotals = {}
         for line in self.pvservices:
             solartotals[line] = {'Power': 0, 'MaxPower': 0}
@@ -148,6 +147,8 @@ class SystemController(object):
                 if inverter not in self.unavailablepvinverters:
                     solartotals[line]['Power'] += invservices['Power']['Value']
                     solartotals[line]['MaxPower'] += invservices['MaxPower']['Value']
+            mainlogger.debug('PV total power: %s' % solartotals[line]['Power'])
+            mainlogger.debug('PV Max available power: %s' % solartotals[line]['MaxPower'])
 
         # Control the fronius inverter to prevent feed in
         if self.dbusservices['L1InPower']['Value'] < self.settings['MinInPower'] - self.settings['ThrottleBuffer']:
@@ -159,13 +160,16 @@ class SystemController(object):
             self.insurplus = self.settings['MinInPower'] \
                              + self.settings['OverThrottle'] \
                              - self.dbusservices['L1InPower']['Value']
+            mainlogger.debug('Starting to throttle')
         # Increase the powerlimit so that we can utilize the solar power
         elif self.throttleactive:
             self.powerlimit = self.powerlimit + self.settings['ThrottleBuffer']
             self.insurplus = max(self.insurplus - self.settings['ThrottleBuffer'], 0)
+            mainlogger.debug('Increasing PV power slowly and reducing insurplus')
             if solartotals['L1']['Power'] < self.powerlimit + (2 * self.settings['ThrottleBuffer']):
                 self.throttleactive = False
                 self.insurplus = 0
+                mainlogger.debug('Throttling no longer required')
         # Keep limiting the inverter to a value slightly higher than the current power to prevent spikes in solar power
         # even when there is no need for actual throttling
         if not self.throttleactive:
@@ -176,11 +180,13 @@ class SystemController(object):
                                   * self.settings['StrongThrottleBuffer']\
                                   / (self.settings['StrongThrottleMaxSoc'] - self.settings['StrongThrottleMinSoc'])
             self.powerlimit = self.dbusservices['L1OutPower']['Value'] - strongthrottlevalue
+            mainlogger.debug('Strong throttling active')
         # Prevent the powerlimit from being larger than the max inverter power or negative
         if self.powerlimit > solartotals['L1']['MaxPower']:
             self.powerlimit = solartotals['L1']['MaxPower']
         elif self.powerlimit < 0:
             self.powerlimit = 0
+        mainlogger.debug('PV Powerlimit: %s' % self.powerlimit)
 
         # set the fronius powerlimit for each inverter in proportion to the total power currently being produced
         for inverter, invservices in self.pvservices['L1']['Inverters'].items():
@@ -190,6 +196,7 @@ class SystemController(object):
                 else:
                     inverterpowerlimit = self.powerlimit * (invservices['Power']['Value'] / solartotals['L1']['Power'])
                 self.set_value('PowerLimit', inverterpowerlimit, invservices)
+                mainlogger.debug('Setting inverter %s powerlimit to %s' % (inverter, inverterpowerlimit))
 
     def run(self):
 
@@ -210,6 +217,8 @@ class SystemController(object):
         soc = self.dbusservices['Soc']['Value']
         outpower = max(self.dbusservices['L1OutPower']['Value'], 0)
 
+        mainlogger.debug('SOC: %s' % soc)
+        mainlogger.debug('outpower: %s' % outpower)
 
         # Update the runtime variable
         self.prevruntime = datetime.datetime.now()
@@ -239,6 +248,7 @@ class SystemController(object):
             stablebatterysoc = self.settings['WeekendStableBatterySoc']
         else:
             stablebatterysoc = self.settings['WeekStableBatterySoc']
+        mainlogger.debug('stablebatterysoc: %s' % stablebatterysoc)
 
         # Set the correct inputpower
         # The powerslope is used to calculate the inputpower, 0.2 corresponds to 20%
@@ -248,17 +258,21 @@ class SystemController(object):
             inpower = (2.0 * (stablebatterysoc - soc) / 100) \
                       * (self.settings['BatteryCapacity'] /self.settings['LowBatteryRechargeTime']) \
                       + outpower
+            mainlogger.debug('Battery soc lower than setpoint')
         # Battery is above the 20% power value, set inpower = 20% of outpower + constant inpower
         elif soc >= self.settings['20%PowerSoc']:
             inpower = 0.2 * outpower
+            mainlogger.debug('Battery higher than 20% power value')
         # Battery is in the powerslope area, use it to calculate the inpower
         else:
             inpower = outpower * (1 - (soc - stablebatterysoc) * powerslope)
+            mainlogger.debug('Battery in powerslope')
 
         # Do a charge if the conditions are met
         self.charge()
         if self.settings['ChargeActive']:
             inpower = outpower + self.settings['ChargePower']
+            mainlogger.debug('Charging active')
 
         # Safety mechanism to prevent low input power during high power use
         # Mark the data points where outpower is higher than the safety value
@@ -277,17 +291,20 @@ class SystemController(object):
             minin = maxoutpower - self.settings['Safety']['MaxInverterPower']
             self.settings['Safety']['EndTime'] = datetime.datetime.now() + self.settings['Safety']['Duration']
             self.settings['Safety']['Active'] = True
+            mainlogger.debug('Maxoutput has exceeded the critical threshold')
         # Check if the maxoutpower has surpassed the buildup threshold
         elif sum(self.outputpowerlist) >= self.settings['Safety']['BuildupIterations'] *\
                 self.settings['Safety']['BuildupPercentage'] / 100:
             minin = maxoutpower - self.settings['Safety']['MaxInverterPower']
             self.settings['Safety']['EndTime'] = datetime.datetime.now() + self.settings['Safety']['Duration']
             self.settings['Safety']['Active'] = True
+            mainlogger.debug('Maxoutput has exceeded the buildup threshold')
         # Check if the safety period has ended
         else:
             if self.settings['Safety']['EndTime'] < datetime.datetime.now():
                 minin = self.settings['MinInPower']
                 self.settings['Safety']['Active'] = False
+                mainlogger.debug('Safety is no longer active')
 
         # Check if the pv can be controlled and if so, then do it
         if self.pvcontrollable:
@@ -299,6 +316,11 @@ class SystemController(object):
 
         # Send the inputpower to the CCGX control loop
         self.set_value('AcSetpoint', inpower)
+
+        # Log debug info
+        mainlogger.debug('inpower: %s' % inpower)
+        mainlogger.debug('mininpower: %s' % minin)
+        mainlogger.debug('End of list')
 
         # Rescan the services if the correct amount of time has elapsed
         if datetime.datetime.now() >= self.rescan_service_time:
