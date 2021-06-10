@@ -307,10 +307,14 @@ class SystemController(object):
                 mainlogger.debug('Safety is no longer active')
 
         # Check if the pv can be controlled and if so, then do it
-        if self.pvcontrollable:
+        # Only control the pv if connected to mains
+        if self.pvcontrollable and self.dbusservices['InputSource']['Value'] != 240:
             self.control_pv(soc)
         else:
             self.insurplus = 0
+            mainlogger.debug('PV is not controllable. Setting to control pv is set to %s and the input source is %s'
+                             % (self.pvcontrollable, self.dbusservices['InputSource']['Value']))
+
 
         inpower = max(minin, inpower) + self.insurplus
 

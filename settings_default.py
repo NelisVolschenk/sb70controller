@@ -62,6 +62,10 @@ servicesdict = {
                    'Path': "/Ac/Out/L1/P",
                    'Proxy': object,
                    'Value': 0},
+    'InputSource': {'Service': "com.victronenergy.vebus.ttyO1",
+                   'Path': "/Ac/ActiveIn/ActiveInput",
+                   'Proxy': object,
+                   'Value': 0},
         }
 
 pvdict = {
