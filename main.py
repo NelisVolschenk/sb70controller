@@ -191,8 +191,13 @@ class SystemController(object):
         # set the fronius powerlimit for each inverter in proportion to the total power currently being produced
         for inverter, invservices in self.pvservices['L1']['Inverters'].items():
             if inverter not in self.unavailablepvinverters:
-                if solartotals['L1']['Power'] == 0:
-                    inverterpowerlimit = self.settings['ThrottleBuffer']
+                if not self.throttleactive:
+                    if solartotals['L1']['Power'] == 0:
+                        inverterpowerlimit = self.settings['ThrottleBuffer'] / len(self.pvservices['L1']['Inverters'])
+                    # Ensure that the throttle buffer gets distributed evenly between the inverters
+                    else:
+                        inverterpowerlimit = invservices['Power']['Value'] + \
+                                             self.settings['ThrottleBuffer'] / len(self.pvservices['L1']['Inverters'])
                 else:
                     inverterpowerlimit = self.powerlimit * (invservices['Power']['Value'] / solartotals['L1']['Power'])
                 self.set_value('PowerLimit', inverterpowerlimit, invservices)
