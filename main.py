@@ -189,6 +189,7 @@ class SystemController(object):
         mainlogger.debug('PV Powerlimit: %s' % self.powerlimit)
 
         # set the fronius powerlimit for each inverter in proportion to the total power currently being produced
+        # Ensure inv_count is always at least 1
         inv_count = max(len(self.pvservices['L1']['Inverters']), 1)
         for inverter, invservices in self.pvservices['L1']['Inverters'].items():
             if inverter not in self.unavailablepvinverters:
