@@ -362,7 +362,7 @@ if __name__ == "__main__":
     DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
     # start the controller
-    mainlogger.info('Starting SystemController')
+    mainlogger.debug('Starting SystemController')
     controller = SystemController(bus)
     glib.timeout_add_seconds(controller.settings['LoopCheckTime'], controller.run)
     mainloop = glib.MainLoop()
