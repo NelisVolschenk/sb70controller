@@ -3,7 +3,7 @@
 # Imports
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-import glib
+from gi.repository import GLib as glib
 import time
 import os
 import sys
