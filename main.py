@@ -12,7 +12,9 @@ import logging
 import copy
 from logging.handlers import RotatingFileHandler
 from settings import settingsdict, servicesdict, pvdict, donotcalclist # Change this for production
-from ext.velib_python.vedbus import VeDbusItemImport
+
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
+from vedbus import VeDbusItemImport
 
 
 class SystemController(object):
